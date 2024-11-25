@@ -22,6 +22,7 @@
 - GUI
   - Allow GUI viewing for both admin and customer. Technically, View menu should be for Customer, and view pending orders for Admin, based on Assignment 3
   - Possible plan: view_menu: for Customer, execute the method which displays GUI menu. for Admin, provide an option for the same
+  - Current thinking - instead of displaying all items, display the number of items ordered. 
 
 
 # Current Task
