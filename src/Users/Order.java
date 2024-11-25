@@ -22,7 +22,7 @@ public class Order {
     private boolean refund;
 
     // contains only current pending orders
-    protected static PriorityQueue<Order> orders = new PriorityQueue<>(new CustomerPQComparator());
+    public static PriorityQueue<Order> orders = new PriorityQueue<>(new CustomerPQComparator());
 
     public Order(ArrayList<FoodItem> items, ArrayList<Integer> quant, Customer customer, int price) {
         this.items = items;
@@ -60,7 +60,7 @@ public class Order {
         }
     }
 
-    public void transfer_order_to_file() {
+    public void transfer_order_to_customers_file() {
         /*
         Appends order to the Order History of the Customer in the file
         WRITE THIS USING BUFFERED WRITER. For each order, these are the lines:
@@ -128,6 +128,51 @@ public class Order {
             e.printStackTrace();
         }
     }
+
+    // An ORDER object should call this
+    public void remove_order_from_pendingOrders_file() {
+        try (BufferedReader file_reader = new BufferedReader(new FileReader("C:\\Users\\RIshi\\IdeaProjects\\ByteMeGUI\\files\\pendingOrders.txt"));
+             BufferedWriter file_writer = new BufferedWriter(new FileWriter("C:\\Users\\RIshi\\IdeaProjects\\ByteMeGUI\\files\\temp.txt")))
+        {
+            String line;
+            boolean found = false;
+            while ((line = file_reader.readLine()) != null) {
+                if (line.startsWith("+ ")) {
+                    String[] order_details = line.substring(2).split(" ");
+                    String customer_name = order_details[0];
+
+                    // Since a customer can have only 1 pending order at a time, checking for only the name suffices
+                    if (customer_name.equals(this.getCustomer().getName())) {
+                        found = true;
+                        while ((line = file_reader.readLine()) != null && line.startsWith("= ")) {
+                            ;                       // skip FoodItem lines of the current order
+                        }
+                    }
+                }
+
+                if (!found) {
+                    // writing all other lines
+                    file_writer.write(line);
+                    file_writer.newLine();
+                } else {
+                    found = false;                      // resetting after skipping the required order
+                }
+            }
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // replacing the file
+        try {
+            Path temp_file_path = Paths.get("C:\\Users\\RIshi\\IdeaProjects\\ByteMeGUI\\files\\temp.txt");
+            Path original_file_path = Paths.get("C:\\Users\\RIshi\\IdeaProjects\\ByteMeGUI\\files\\pendingOrders.txt");
+            Files.move(temp_file_path, original_file_path, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     public void add_item_and_quantity(FoodItem item, int quantity) {
         items.add(item);

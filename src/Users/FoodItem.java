@@ -54,6 +54,10 @@ public class FoodItem {
         return special_request;
     }
 
+    public void setSpecial_request(String special_request) {
+        this.special_request = special_request;
+    }
+
     public String getName() { return name; }
 
     public int getPrice() { return price; }

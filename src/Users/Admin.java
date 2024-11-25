@@ -33,6 +33,8 @@ public class Admin extends User {
         System.out.println("6: Process Refund for Cancelled Orders");
         System.out.println("7: End sales for the day");
         System.out.println("8: View the Daily Sales Report");
+        System.out.println("9: View the Menu page of the GUI");
+        System.out.println("10: View the Pending Orders page of the GUI");
     }
 
 
@@ -262,6 +264,7 @@ public class Admin extends User {
                     for (FoodItem food: order.getItems()) {
                         if (food.getName().equals(item.getName())) {
                             order.setStatus(Order.Status.DENIED);
+                            order.remove_order_from_pendingOrders_file();
                         }
                     }
                 }
@@ -346,8 +349,8 @@ public class Admin extends User {
         System.out.println("Order status updated successfully.");
         o.getCustomer().setCurrent_pending_order(false);                        // order not pending now
         o.getCustomer().getOrder_history().push(o);
-        o.transfer_order_to_file();
-        // HERE, REMOVE o from PENDING ORDERS FILE
+        o.transfer_order_to_customers_file();
+        o.remove_order_from_pendingOrders_file();
         Order.orders.poll();
         return true;
     }

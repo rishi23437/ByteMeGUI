@@ -43,6 +43,8 @@ public class Customer extends User {
         System.out.println("8: Cancel Order");
         System.out.println("9: View Order History");
         System.out.println("10: Reorder a previously ordered set of items");
+        System.out.println("11: View the Menu page of the GUI");
+        System.out.println("12: View the Pending Orders page of the GUI");
     }
 
     public void add_order_to_history(Order order) {
@@ -51,6 +53,62 @@ public class Customer extends User {
 
     public Order get_last_order() {
         return order_history.peek();
+    }
+
+    // FOR JUnit TESTING only ------------------------------- You Can ignore this if you only want to see the functionality of the system
+    public void test_add_item() {
+        // code same as that of place_order (inside if(op == 1))
+        Scanner scan = new Scanner(System.in);
+        ArrayList<FoodItem> items = new ArrayList<>();
+        ArrayList<Integer> quantities = new ArrayList<>();
+        int total_price = 0;
+
+        System.out.println("Enter the name of the item you would like to add:");
+        String name = scan.nextLine().toUpperCase();
+        boolean found = false;
+        for (FoodItem item: FoodItem.menu) {                            // Searching for item
+            if (name.equals(item.getName()) && item.isAvailable()) {
+                // ITEM FOUND
+                System.out.println("Item has been found!");
+                System.out.println("Enter the quantity of this item:");
+                if (!scan.hasNextInt()) {                                   // check for int
+                    scan.nextLine();
+                    System.out.println("Please enter a number!");
+                    return;
+                }
+                int quant = scan.nextInt();
+                scan.nextLine();
+                while (quant <= 0) {
+                    System.out.println("Price is non-positive. Enter a positive value for price.");
+                    if (!scan.hasNextInt()) {                                   // check for int
+                        scan.nextLine();
+                        System.out.println("Please enter a number!");
+                        continue;
+                    }
+                    quant = scan.nextInt();
+                    scan.nextLine();
+                }
+                // item and its quantity have been decided
+                System.out.println("Do you want to add a special request for this item? (Y/N)");
+                String ch = scan.nextLine();
+                String request = "";
+                if (ch.equalsIgnoreCase("y")) {
+                    System.out.println("Enter your request: ");
+                    request = scan.nextLine();
+                }
+                // CREATING NEW FOOD_ITEM OBJECT SO THAT CHANGES DONT REFLECT IN THE OBJECT PRESENT IN THE MENU
+                FoodItem new_item = new FoodItem(item.getName(), item.getCategory(), item.getPrice(), request);
+                items.add(new_item);
+                quantities.add(quant);
+                total_price += (quant)*(item.getPrice());
+                System.out.println("The item has been added to your cart.");
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            System.out.println("Item with given name not found or not available.");
+        }
     }
 
     // 1. BECOME VIP
@@ -331,6 +389,26 @@ public class Customer extends User {
                     }
 
                     Order.orders.add(new_order);
+
+                    // Add order to PENDING ORDERS FILE, therefore opening in append mode
+                    try (BufferedWriter file_writer = new BufferedWriter(new FileWriter("C:\\Users\\RIshi\\IdeaProjects\\ByteMeGUI\\files\\pendingOrders.txt", true))) {
+                        // writing first line: + customer_name total_price status
+                        file_writer.write("+ " + new_order.getCustomer().getName() + " " +
+                                    new_order.getTotal_price() + " " + new_order.getStatus());
+                        file_writer.newLine();
+
+                        // Writing foodItem lines
+                        for (int i = 0; i < new_order.getItems().size(); i++) {
+                            FoodItem item = new_order.getItems().get(i);
+                            int quantity = new_order.getQuantities().get(i);
+                            file_writer.write("= " + item.getName() + " " + item.getCategory() + " " +
+                                    item.getPrice() + " " + quantity + " " + item.getSpecial_request());
+                            file_writer.newLine();
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
                     System.out.println("Payment successful! Order placed successfully!");
                     this.current_pending_order = true;
                     break;
@@ -367,6 +445,7 @@ public class Customer extends User {
                     o.setStatus(Order.Status.CANCELLED);                // Order added to Cancelled orders list(see setStatus method of Order class)
                     this.order_history.push(o);
                     Order.orders.remove(o);
+                    o.remove_order_from_pendingOrders_file();
                     this.current_pending_order = false;
                     System.out.println("Order cancelled successfully. You will get your refund in due time.");
                     return;
@@ -423,6 +502,26 @@ public class Customer extends User {
         Order prev_order = order_history.get(order_num - 1);
         Order new_order = new Order(prev_order.getItems(), prev_order.getQuantities(), this, prev_order.getTotal_price());
         Order.orders.add(new_order);
+
+        // Add order to PENDING ORDERS FILE, therefore opening in append mode
+        try (BufferedWriter file_writer = new BufferedWriter(new FileWriter("C:\\Users\\RIshi\\IdeaProjects\\ByteMeGUI\\files\\pendingOrders.txt", true))) {
+            // writing first line: + customer_name total_price status
+            file_writer.write("+ " + new_order.getCustomer().getName() + " " +
+                    new_order.getTotal_price() + " " + new_order.getStatus());
+            file_writer.newLine();
+
+            // Writing foodItem lines
+            for (int i = 0; i < new_order.getItems().size(); i++) {
+                FoodItem item = new_order.getItems().get(i);
+                int quantity = new_order.getQuantities().get(i);
+                file_writer.write("= " + item.getName() + " " + item.getCategory() + " " +
+                        item.getPrice() + " " + quantity + " " + item.getSpecial_request());
+                file_writer.newLine();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         System.out.println("Payment successful! Order placed successfully!");
         this.current_pending_order = true;
     }
