@@ -1,7 +1,4 @@
-import Users.Admin;
-import Users.Customer;
-import Users.FoodItem;
-import Users.Order;
+import Users.*;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -30,7 +27,9 @@ public class Main {
                 "          $$$$$$/                                                   ");
         System.out.println("Welcome to our online Food Ordering Application!");
 
-        // LOADING CUSTOMER DATA FROM FILE TO LIST!!!!
+
+        // The 3 following operations are related to retrieving data from the 3 files. You can convert these into functions later
+        // 1. LOADING CUSTOMER DATA FROM FILE TO LIST!!!!
         try (BufferedReader file_reader = new BufferedReader(new FileReader("C:\\Users\\RIshi\\IdeaProjects\\ByteMeGUI\\files\\customersData.txt")))
         {
             Customer current_customer = null;
@@ -83,7 +82,7 @@ public class Main {
         }
 
 
-        // LOADING MENU FROM FILE TO LIST
+        // 2. LOADING MENU FROM FILE TO LIST
         try (BufferedReader file_reader = new BufferedReader(new FileReader("C:\\Users\\RIshi\\IdeaProjects\\ByteMeGUI\\files\\menu.txt")))
         {
             String line;
@@ -109,6 +108,63 @@ public class Main {
         catch (IOException e) {
             e.printStackTrace();
         }
+
+
+        // 3. LOADING PENDING ORDERS FROM FILE TO LIST
+        try (BufferedReader fileReader = new BufferedReader(new FileReader("C:\\Users\\RIshi\\IdeaProjects\\ByteMeGUI\\files\\pendingOrders.txt")))
+        {
+            String line;
+            Order curr_order = null;
+            while ((line = fileReader.readLine()) != null) {
+                if (line.startsWith("+ ")) {                                                // for lines starting with details of Orders
+                    String[] order_details = line.substring(2).split(" ");
+                    String customer_name = order_details[0];
+                    int total_price = Integer.parseInt(order_details[1]);
+                    Order.Status status = Order.Status.valueOf(order_details[2]);
+
+                    // finding the associated customer
+                    Customer customer = null;
+                    for (Customer c : customers) {
+                        if (c.getName().equals(customer_name)) {
+                            customer = c;                                               // customer found
+                        }
+                    }
+
+                    if (customer != null) {
+                        customer.setCurrent_pending_order(true);
+                        curr_order = new Order(total_price, customer, status);
+                        Order.orders.add(curr_order);
+                    }
+                }
+                else if (line.startsWith("= ") && curr_order != null) {                           // for lines starting with details of FoodItems
+                    String[] item_details = line.substring(2).split(" ");
+                    String name = item_details[0];
+                    String category = item_details[1];
+                    int price = Integer.parseInt(item_details[2]);
+                    int quantity = Integer.parseInt(item_details[3]);
+                    String special_request;
+                    if (item_details.length > 4) {
+                        // contains special request
+                        special_request = String.join(" ", Arrays.copyOfRange(item_details, 5, item_details.length));
+                    }
+                    else {
+                        special_request = "";
+                    }
+
+                    FoodItem new_item = new FoodItem(name, category, price);
+                    new_item.setSpecial_request(special_request);
+
+                    curr_order.getItems().add(new_item);
+                    curr_order.getQuantities().add(quantity);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+        // INITIALIZE GUI OBJECT HERE
+        CanteenGUI gui = new CanteenGUI(FoodItem.menu, Order.orders);
 
 
         boolean flag = true;
@@ -162,14 +218,17 @@ public class Main {
                     }
                     else if (op == 1) {
                         admin.add_item();
+                        gui.refresh_menu();
                         System.out.println();
                     }
                     else if (op == 2) {
                         admin.update_item();
+                        gui.refresh_menu();
                         System.out.println();
                     }
                     else if (op == 3) {
                         admin.remove_item();
+                        gui.refresh_menu();
                         System.out.println();
                     }
                     else if (op == 4) {
@@ -178,6 +237,7 @@ public class Main {
                     }
                     else if (op == 5) {
                         admin.process_orders();
+                        gui.refresh_orders();
                         System.out.println();
                     }
                     else if (op == 6) {
@@ -190,6 +250,14 @@ public class Main {
                     }
                     else if (op == 8) {
                         admin.daily_sales_report();
+                        System.out.println();
+                    }
+                    else if (op == 9) {
+                        gui.card_layout.show(gui.getMain_panel(), "Canteen Menu");
+                        System.out.println();
+                    }
+                    else if (op == 10) {
+                        gui.card_layout.show(gui.getMain_panel(), "Pending Orders");
                         System.out.println();
                     }
                     else {
@@ -302,6 +370,7 @@ public class Main {
                             continue;
                         }
                         customer.place_order();
+                        gui.refresh_orders();
                         System.out.println();
                     }
                     else if (op == 7) {
@@ -310,6 +379,7 @@ public class Main {
                     }
                     else if (op == 8) {
                         customer.cancel_order();
+                        gui.refresh_orders();
                         System.out.println();
                     }
                     else if (op == 9) {
@@ -318,6 +388,15 @@ public class Main {
                     }
                     else if (op == 10) {
                         customer.reorder();
+                        gui.refresh_orders();
+                        System.out.println();
+                    }
+                    else if (op == 11) {
+                        gui.card_layout.show(gui.getMain_panel(), "Canteen Menu");
+                        System.out.println();
+                    }
+                    else if (op == 12) {
+                        gui.card_layout.show(gui.getMain_panel(), "Pending Orders");
                         System.out.println();
                     }
                     else {
